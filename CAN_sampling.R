@@ -17,10 +17,6 @@ posible.agents <- gs_read(sheet.posible, ws = "POS!BLE Agents", range = "A2:N129
 posible.agents <- data.frame(posible.agents, anm = rep("Posible", nrow(posible.agents)))
 posible.agents <- posible.agents[, c(1:5, 8:14, 6, 15)]
 
-# Drop variables that won't be used
-posible.agents <- select(posible.agents, -one_of("DATE.ONBOARDED..MM.DD.YYYY.",
-                                            "CURRENT.DEVICE.ID"))
-
 # Rename variables
 var.names <- c("Num", "Id", "first.name", "last.name", "gender", "mobile.num",
                "business.name", "business.type", "region", "province", "municipality",
@@ -37,7 +33,7 @@ all.agents <- rbind(panalo.agents, posible.agents)
 # Function to generate frequency tables
 tables <- function(x) {data.frame(table(select(all.agents, x), useNA = 'always'))}
 # Candidate variables
-to.table <- names(all.agents)[c(5, 8:12)]
+to.table <- names(all.agents)[c(5, 8:12, 14)]
 # Frequency table for candidate variables
 for(i in seq_along(to.table)) {
       print(to.table[i])
@@ -48,4 +44,28 @@ for(i in seq_along(to.table)) {
 
 # Select sample ---------------------------------------------------------------------
 
+# Select sample
+source("stratified.R")
+sample.agents <- stratified(df = all.agents, group = "anm", 
+                            size =  773/nrow(all.agents))
 
+# Export as xlsx file
+library(xlsx)
+write.xlsx(sample.agents, "can_sample_agents.xlsx", sheetName = "Sample agents")
+
+
+# Create main and replacement -------------------------------------------------------
+
+# Import sample generated
+sample.agents <- read.xlsx("can_sample_agents.xlsx", sheetIndex = 1)
+# Subsample of 400 agents
+sample.agents.400 <- stratified(sample.agents, group = "anm", 
+                                size = 400/nrow(sample.agents))
+# Replacement with 373 agents left
+sample.agents.replacement <- sample.agents[!(sample.agents$Id %in% sample.agents.400$Id), ]
+# Export to xlsx
+write.xlsx(sample.agents, "can_sample_agents_2.xlsx", sheetName = "all_sample_773")
+write.xlsx(sample.agents.400, "can_sample_agents_2.xlsx", sheetName = "main_400",
+           append = TRUE)
+write.xlsx(sample.agents.replacement, "can_sample_agents_2.xlsx",
+           sheetName = "replacement_373", append = TRUE)
