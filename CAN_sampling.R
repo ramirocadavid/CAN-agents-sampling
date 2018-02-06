@@ -7,7 +7,7 @@ library(dplyr)
 (my_sheets <- gs_ls())
 
 # Connect to Panalo and Panalo data
-sheet.panalo <- gs_title("PANALO Data Collection")
+sheet.panalo <- gs_title("PANALO/DIGIPAY Data Collection")
 sheet.posible <- gs_title("POS!BLE Data Collection")
 
 # Import agents data
@@ -48,9 +48,9 @@ for(i in seq_along(to.table)) {
 source("stratified.R")
 sample.agents <- stratified(df = all.agents, group = "anm", 
                             size =  773/nrow(all.agents))
-
 # Export as xlsx file
 library(xlsx)
+wirte.xlsx(all.agents, "can_all_agents", sheetName = "All agents")
 write.xlsx(sample.agents, "can_sample_agents.xlsx", sheetName = "Sample agents")
 
 
@@ -69,3 +69,18 @@ write.xlsx(sample.agents.400, "can_sample_agents_2.xlsx", sheetName = "main_400"
            append = TRUE)
 write.xlsx(sample.agents.replacement, "can_sample_agents_2.xlsx",
            sheetName = "replacement_373", append = TRUE)
+
+
+# Panalo replacement ----------------------------------------------------------------
+
+# We need to replace 65 agents that were found to be inactive
+data.rep <- read.csv("panalo_replacement.csv")
+data.rep <- data.rep[data.rep$Status != "NOT ACTIVE", ]
+# Select sample
+source("stratified.R")
+sample.agents <- stratified(df = data.rep, group = "anm", 
+                            size =  65/nrow(data.rep))
+# Export as xlsx file
+library(xlsx)
+write.xlsx(sample.agents, "can_panalo_replacement.xlsx", sheetName = "Panalo replacements")
+
